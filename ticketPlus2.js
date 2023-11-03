@@ -9,22 +9,13 @@ const Ddddocr = require('ddddocr');
 async function main(){
     puppeteer.use(StealthPlugin());
     const browser = await puppeteer.launch({
-        headless: false, //拿掉機器人標頭
+        headless: false, 
         args: [`--window-size=${1000},${750}`] //瀏覽器視窗設定
     });
-    const mainPage1 = await browser.newPage(); //用於購票
-    const mainPage2 = await browser.newPage(); //用於登入
+    const mainPage1 = await browser.newPage();
     //取消載入圖片，減少載入時間，由於遠大驗證碼並非單純 image，因此不影響
-    await mainPage1.setRequestInterception(true); 
-    await mainPage2.setRequestInterception(true);
+    await mainPage1.setRequestInterception(true);
     mainPage1.on('request', request => {
-        if (request.resourceType() === 'image') {
-          request.abort();
-        } else {
-          request.continue();
-        }
-    });
-    mainPage2.on('request', request => {
         if (request.resourceType() === 'image') {
           request.abort();
         } else {
@@ -37,16 +28,22 @@ async function main(){
         await dialog.accept();
     });
 
-    await mainPage2.goto('https://ticketplus.com.tw', { waitUntil: 'domcontentloaded' });
-    await mainPage2.waitForSelector('button.v-btn.v-btn--outlined.v-btn--rounded');
-    await mainPage2.click('button.v-btn.v-btn--outlined.v-btn--rounded');
-    await mainPage2.waitForSelector('input[type=password]');
-    await mainPage2.waitForTimeout(500);
-    await mainPage2.type('input.input-tel__input', 'XXX'); //鍵入電話
-    await mainPage2.type('input[type=password]', 'XXX'); //鍵入密碼
-    await mainPage2.waitForTimeout(5000); //五秒時間，手動調整電話區域再按登入，不足可更改為10000(10秒)
+    await mainPage1.goto('https://ticketplus.com.tw', { waitUntil: 'domcontentloaded' });
+    await mainPage1.waitForSelector('button.v-btn.v-btn--outlined.v-btn--rounded');
+    await mainPage1.click('button.v-btn.v-btn--outlined.v-btn--rounded');
+    await mainPage1.waitForSelector('input[type=password]');
+    await mainPage1.waitForTimeout(500);
+    await mainPage1.type('input.input-tel__input', 'ＸＸＸ'); //鍵入電話
+    await mainPage1.type('input[type=password]', 'ＸＸＸ'); //鍵入密碼
+    await mainPage1.click('input#MazPhoneNumberInput-60_country_selector');
+    await mainPage1.keyboard.press('Space');
+    for(i=1; i<=31; i++){
+        await mainPage1.keyboard.press('ArrowUp');
+        await mainPage1.waitForTimeout(25);
+    }
+    await mainPage1.keyboard.press('Enter');
+    await mainPage1.waitForTimeout(1000);
     await mainPage1.goto('https://ticketplus.com.tw/order/c752489ad3e922cbd8943deccdd22696/f985a29962a5b0072d835d6e70190183', { waitUntil: 'domcontentloaded' });
-    //await mainPage1.goto('https://ticketplus.com.tw/order/6cd9812886feddecc4c4418b964301c3/bda6f9217fa64449830bb48e655ba4b3', { waitUntil: 'domcontentloaded' });
 
     /*
     //時間到自動刷票
@@ -65,14 +62,13 @@ async function main(){
     times=1;
     check: while(buy==1){
         await mainPage1.goto('https://ticketplus.com.tw/order/c752489ad3e922cbd8943deccdd22696/f985a29962a5b0072d835d6e70190183', { waitUntil: 'domcontentloaded' });
-        //await mainPage1.goto('https://ticketplus.com.tw/order/6cd9812886feddecc4c4418b964301c3/bda6f9217fa64449830bb48e655ba4b3', { waitUntil: 'domcontentloaded' });
         await mainPage1.waitForSelector('.v-item-group .v-expansion-panel', {visible: true});
         await mainPage1.click('.v-item-group .v-expansion-panel');
         //用於選擇要哪個購票欄位，no tab no enter 第一個，one tab one enter 第二個，two tab one enter 第三個
         //await mainPage1.keyboard.press('Tab');
         //await mainPage1.keyboard.press('Tab');
-        //await mainPage1.keyboard.press('Tab');
-        //await mainPage1.keyboard.press('Enter');
+        await mainPage1.keyboard.press('Tab');
+        await mainPage1.keyboard.press('Enter');
         //爬所選區域剩餘票數
         soldOut = "default";
         html = await mainPage1.content();
